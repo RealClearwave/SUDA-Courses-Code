@@ -1,2 +1,2 @@
-# SUDA_Discrete_Math
-Homework of SUDA Discrete Math
+# SUDA Courses Code
+Homework of SUDA Courses
