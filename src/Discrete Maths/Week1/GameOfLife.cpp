@@ -46,22 +46,27 @@ public:
             pair<int, int> cell = updateQueue.front();
             updateQueue.pop();
             cellsToCheck.erase(cell);
-
-            int x = cell.first;
-            int y = cell.second;
-            int liveNeighbors = countLiveNeighbors(x, y);
-
-            if (grid[x][y] == 1) {
-                if (liveNeighbors < 2 || liveNeighbors > 3) { //Alive -> Dead
-                    nextGrid[x][y] = 0;
-                    addNeighborsToQueue(x, y);
-                }
-            } else {
-                if (liveNeighbors == 3) { //Dead -> Alive
-                    nextGrid[x][y] = 1;
-                    addNeighborsToQueue(x, y);
-                }
-            }
+			for (int j = -1; j <= 1; ++j)
+				for (int k = -1; k <= 1; ++k){
+		            int x = cell.first + j;
+		            int y = cell.second + k;
+		            if (x < 0 || x >= rows) continue;
+					if (y < 0 || y >= cols) continue;
+					
+		            int liveNeighbors = countLiveNeighbors(x, y);
+		
+		            if (grid[x][y] == 1) {
+		                if (liveNeighbors < 2 || liveNeighbors > 3) { //Alive -> Dead
+		                    nextGrid[x][y] = 0;
+		                    addNeighborsToQueue(x, y);
+		                }
+		            } else {
+		                if (liveNeighbors == 3) { //Dead -> Alive
+		                    nextGrid[x][y] = 1;
+		                    addNeighborsToQueue(x, y);
+		                }
+		            }
+				}   
         }
 
         grid = nextGrid;
