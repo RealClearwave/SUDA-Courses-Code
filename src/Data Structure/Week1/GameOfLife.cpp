@@ -1,3 +1,11 @@
+/*
+	Name: Game of Life
+	Copyright: Apache
+	Author: Tianyu wang 2362401031
+	Date: 07/09/24 09:08
+	Description: An implementation of John Conway's Game of Life.
+*/
+
 #include <bits/stdc++.h>
 using namespace std;
 
@@ -13,7 +21,7 @@ private:
     vector<vector<int>> grid;
     int rows, cols;
     int stepCount;
-    queue<pair<int, int>> updateQueue;
+    queue<pair<int, int>> updateQueue; //only adjacent cells should be updated
     unordered_set<pair<int, int>, pair_hash> cellsToCheck;
 
 public:
@@ -33,7 +41,7 @@ public:
     void addCellToQueue(int x, int y) {
         if (x < 0 || x >= rows || y < 0 || y >= cols) return;
         pair<int, int> cell = {x, y};
-        if (cellsToCheck.find(cell) == cellsToCheck.end()) {
+        if (cellsToCheck.find(cell) == cellsToCheck.end()) { //currently not in queue
             updateQueue.push(cell);
             cellsToCheck.insert(cell);
         }
@@ -47,7 +55,7 @@ public:
             updateQueue.pop();
             cellsToCheck.erase(cell);
 			for (int j = -1; j <= 1; ++j)
-				for (int k = -1; k <= 1; ++k){
+				for (int k = -1; k <= 1; ++k){ //search adjacent cells 
 		            int x = cell.first + j;
 		            int y = cell.second + k;
 		            if (x < 0 || x >= rows) continue;
@@ -134,7 +142,7 @@ public:
             string line;
             int r = 0;
             while (getline(inFile, line) && r < rows) {
-                istringstream ss(line);
+                ifstream ss(line);
                 for (int c = 0; c < cols; ++c) {
                     ss >> grid[r][c];
                     if (grid[r][c] == 1) {
@@ -160,14 +168,14 @@ public:
         unordered_set<string> previousStates;
         while (true) {
             string currentState = gridToString();
-            if (previousStates.find(currentState) != previousStates.end()) {
+            if (previousStates.find(currentState) != previousStates.end()) { //state appeared before
                 cout << "Game has converged to a stable state or a repeating cycle." << endl;
                 break;
             }
             previousStates.insert(currentState);
             system("cls");
             update();
-            if (updateQueue.empty()) {
+            if (updateQueue.empty()) { //nothing to update
                 cout << "No more updates needed; the game is stable." << endl;
                 break;
             }
