@@ -191,13 +191,33 @@ public:
         }
         return ss.str();
     }
+    
+	void setGridFromInput() {
+	    cout << "Input the grid (rows of '.' for dead cells and 'X' for live cells):\n";
+	    for (int i = 0; i < rows; ++i) {
+	        for (int j = 0; j < cols; ++j) {
+	            char cell;
+	            cin >> cell;
+	            if (cell == 'X') {
+	                grid[i][j] = 1;
+	                addNeighborsToQueue(i, j);
+	            } else if (cell == '.') {
+	                grid[i][j] = 0;
+	            } else {
+	                cout << "Invalid input! Please use '.' for dead cells and 'X' for live cells.\n";
+	                --j; // Re-prompt for the current cell
+	            }
+	        }
+	    }
+	    stepCount = 0;
+	}
 };
 
 void Shell(GameOfLife &game) {
     string command;
     deque<string> commandHistory;
     cout << "Welcome to the Game of Life Shell!\n";
-    cout << "Commands: print, update, random, run\nsave <filename>, load <filename>, credit, quit\n";
+    cout << "Commands: print, clear, update, random, run, input, \nsave <filename>, load <filename>, credit, quit\n";
     while (true) {
         cout << ">>";
         getline(cin, command);
@@ -208,7 +228,11 @@ void Shell(GameOfLife &game) {
         }
 
         commandHistory.push_back(command);
-        if (command == "print") {
+        if (command == ""){
+        	continue;
+		}else if (command == "clear"){
+			system("cls");
+		}else if (command == "print") {
             game.printGrid();
         } else if (command == "update") {
             game.update();
@@ -225,10 +249,14 @@ void Shell(GameOfLife &game) {
             game.showCredits();
         } else if (command == "run") {
             game.runUntilConvergence();
-        } else if (command == "quit") {
+        } else if (command == "input") {
+            game.setGridFromInput();
+            game.printGrid();
+            while (!commandHistory.empty()) commandHistory.pop_back();
+        }else if (command == "quit") {
             break;
         } else {
-            cout << "Unknown command. Try again.\n";
+            cout << "Unknown command:"<<command<<". Try again.\n";
         }
     }
 }
