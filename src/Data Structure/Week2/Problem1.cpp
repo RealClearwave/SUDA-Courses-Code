@@ -117,7 +117,9 @@ public:
     ~OrderedSeqList();
 
     void insert(int elem);
+    void insertAt(int pos, int elem);
     void replace(int pos, int elem);
+    void insert(int pos, int elem) override;
     void remove(int pos) override;
 };
 
@@ -140,12 +142,25 @@ void OrderedSeqList::insert(int elem) {
     length++;
 }
 
+void OrderedSeqList::insertAt(int pos, int elem) {
+    if (pos < 1 || pos > length + 1 || !(data[pos-2] <= elem && data[pos-1] >= elem)) {
+        cout << "Invalid insert position!" << endl;
+        return;
+    }
+    
+    insert(elem);
+}
+
 void OrderedSeqList::replace(int pos, int elem) {
-    if (pos < 1 || pos > length) {
+    if (pos < 1 || pos > length || !(data[pos-2] <= elem && data[pos] >= elem)) {
         cout << "Invalid position!" << endl;
         return;
     }
     remove(pos);
+    insert(elem);
+}
+
+void OrderedSeqList::insert(int pos, int elem) {
     insert(elem);
 }
 
@@ -162,9 +177,10 @@ int main() {
         cout << "\nSelect an operation:" << endl;
         cout << "1. Insert element in unordered list" << endl;
         cout << "2. Insert element by value in ordered list" << endl;
-        cout << "3. Replace element in ordered list" << endl;
-        cout << "4. Display unordered list" << endl;
-        cout << "5. Display ordered list" << endl;
+        cout << "3. Insert element by position in ordered list" << endl;
+        cout << "4. Replace element in ordered list" << endl;
+        cout << "5. Display unordered list" << endl;
+        cout << "6. Display ordered list" << endl;
         cout << "Q. Quit" << endl;
         cout << "Enter your choice: ";
         cin >> choice;
@@ -190,17 +206,24 @@ int main() {
             orderedList.insert(elem);
             break;
         case '3':
+            cout << "Enter the element to insert: ";
+            cin >> elem;
+            cout << "Enter the position to insert: ";
+            cin >> pos;
+            orderedList.insertAt(pos, elem);
+            break;
+        case '4':
             cout << "Enter the position to replace: ";
             cin >> pos;
             cout << "Enter the new element value: ";
             cin >> elem;
             orderedList.replace(pos, elem);
             break;
-        case '4':
+        case '5':
             cout << "Elements in unordered list:" << endl;
             seqList.display();
             break;
-        case '5':
+        case '6':
             cout << "Elements in ordered list:" << endl;
             orderedList.display();
             break;
