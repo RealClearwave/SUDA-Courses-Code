@@ -2,6 +2,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <string>
+#include <climits>
 
 using namespace std;
 
@@ -148,22 +149,24 @@ int main() {
     }
     infile.close();
 
+    // Count total number of each unique card (suit and rank)
     int cardCounts[4][13] = {0};
     for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            SingleLink::Node* p = decks[i][j]->head->next;
+        for (int s = 0; s < 4; ++s) {
+            SingleLink::Node* p = decks[i][s]->head->next;
             while (p) {
-                cardCounts[j][p->data - 1]++;
+                cardCounts[s][p->data - 1]++;
                 p = p->next;
             }
         }
     }
 
+    // Calculate the number of complete decks that can be formed
     int completeSets = INT_MAX;
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 13; ++j) {
-            if (cardCounts[i][j] < completeSets)
-                completeSets = cardCounts[i][j];
+    for (int s = 0; s < 4; ++s) {
+        for (int r = 0; r < 13; ++r) {
+            if (cardCounts[s][r] < completeSets)
+                completeSets = cardCounts[s][r];
         }
     }
     if (completeSets == INT_MAX)
@@ -171,13 +174,15 @@ int main() {
 
     cout << completeSets << endl;
 
-    for (int i = 0; i < n; ++i) {
+    // Remove cards used to form complete decks from the original decks
+    for (int c = 0; c < completeSets; ++c) {
         for (int s = 0; s < 4; ++s) {
-            for (int c = 1; c <= 13; ++c) {
-                for (int k = 0; k < completeSets; ++k) {
-                    if (decks[i][s]->search(c)) {
-                        decks[i][s]->remove(c);
-                        break;
+            for (int r = 1; r <=13; ++r) {
+                bool removed = false;
+                for (int i = 0; i < n && !removed; ++i) {
+                    if (decks[i][s]->search(r)) {
+                        decks[i][s]->remove(r);
+                        removed = true;
                     }
                 }
             }
@@ -195,8 +200,8 @@ int main() {
     }
 
     for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            delete decks[i][j];
+        for (int s = 0; s < 4; ++s) {
+            delete decks[i][s];
         }
         delete[] decks[i];
     }
@@ -204,3 +209,4 @@ int main() {
 
     return 0;
 }
+
