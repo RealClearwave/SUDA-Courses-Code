@@ -1,177 +1,317 @@
-#include <iostream>
+#include <iostream> 
 #include <cstring>
 #include <cctype>
 #include <cstdlib>
+#include <vector>
+#include <cmath>
+#include <string>
 using namespace std;
 
+template <typename T>
 class Stack {
 private:
-    double *data;
-    int top;
+    T *data;
+    int topIndex;
     int capacity;
 
 public:
-    Stack(int size) : top(-1), capacity(size) {
-        data = new double[size];
+    Stack(int size) : topIndex(-1), capacity(size) {
+        data = new T[size];
     }
 
     ~Stack() {
         delete[] data;
     }
 
-    void push(double value) {
-        if (top == capacity - 1) {
+    void push(T value) {
+        if (topIndex == capacity - 1) {
             cout << "Stack overflow" << endl;
             exit(1);
         }
-        data[++top] = value;
+        data[++topIndex] = value;
     }
 
-    double pop() {
-        if (top == -1) {
+    T pop() {
+        if (topIndex == -1) {
             cout << "Stack underflow" << endl;
             exit(1);
         }
-        return data[top--];
+        return data[topIndex--];
     }
 
-    double peek() const {
-        if (top == -1) {
+    T top() const {
+        if (topIndex == -1) {
             cout << "Stack is empty" << endl;
             exit(1);
         }
-        return data[top];
+        return data[topIndex];
     }
 
     bool isEmpty() const {
-        return top == -1;
+        return topIndex == -1;
     }
 };
 
-class ExpressionProcessor {
+class exprProcessor{
 public:
-    double evaluateInfix(const char *expression);
-    double evaluatePostfix(const char *expression);
+    double parseExpr(string expr);
 private:
-    int precedence(char op);
-    double applyOperation(double a, double b, char op);
-    double readNumber(const char *&expr, bool isNegative);
+    vector<string> tokenize(string expr);
+
+    int priority(char op);
+    double operate(double opr1, double opr2, char op);
+
+    double evalPrefix(vector<string> tokens);
+    double evalInfix(vector<string> tokens);
+    double evalPostfix(vector<string> tokens);
+
+    bool isOperator(const string& token);
 };
 
-int ExpressionProcessor::precedence(char op) {
-    if (op == '+' || op == '-') return 1;
-    if (op == '*' || op == '/') return 2;
-    return 0;
+vector<string> exprProcessor::tokenize(string expr) {
+    vector<string> tokens;
+    string token;
+    for (size_t i = 0; i < expr.length(); i++) {
+        char ch = expr[i];
+        if (isspace(ch)) {
+            continue;
+        }
+        if (isdigit(ch) || ch == '.') {
+            token += ch;
+            while (i + 1 < expr.length() && (isdigit(expr[i + 1]) || expr[i + 1] == '.')) {
+                token += expr[++i];
+            }
+            tokens.push_back(token);
+            token.clear();
+        } else if (ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '^') {
+            if (ch == '-' && (tokens.empty() || isOperator(tokens.back()) || tokens.back() == "(")) {
+                token += ch;
+                while (i + 1 < expr.length() && (isdigit(expr[i + 1]) || expr[i + 1] == '.')) {
+                    token += expr[++i];
+                }
+                tokens.push_back(token);
+                token.clear();
+            } else {
+                tokens.push_back(string(1, ch));
+            }
+        } else if (ch == '(' || ch == ')' || ch == '#') {
+            tokens.push_back(string(1, ch));
+        } else {
+            cout << "Invalid character: " << ch << endl;
+            exit(1);
+        }
+    }
+    return tokens;
 }
 
-double ExpressionProcessor::applyOperation(double a, double b, char op) {
+bool exprProcessor::isOperator(const string& token) {
+    return token == "+" || token == "-" || token == "*" || token == "/" || token == "^";
+}
+
+int exprProcessor::priority(char op) {
     switch (op) {
-        case '+': return a + b;
-        case '-': return a - b;
-        case '*': return a * b;
-        case '/': return a / b;
+        case '^': return 3;
+        case '*': 
+        case '/': return 2;
+        case '+': 
+        case '-': return 1;
+        default: return 0;
     }
-    return 0;
 }
 
-double ExpressionProcessor::readNumber(const char *&expr, bool isNegative) {
-    double result = 0;
-    double fraction = 1;
-    bool isFraction = false;
-
-    while (isdigit(*expr) || *expr == '.') {
-        if (*expr == '.') {
-            isFraction = true;
-            expr++;
-            continue;
-        }
-        if (isFraction) {
-            fraction *= 0.1;
-            result += (*expr - '0') * fraction;
-        } else {
-            result = result * 10 + (*expr - '0');
-        }
-        expr++;
+double exprProcessor::operate(double opr1, double opr2, char op) {
+    switch (op) {
+        case '+': return opr1 + opr2;
+        case '-': return opr1 - opr2;
+        case '*': return opr1 * opr2;
+        case '/':
+            if (opr2 == 0) {
+                cout << "Division by zero error" << endl;
+                exit(1);
+            }
+            return opr1 / opr2;
+        case '^':
+            return pow(opr1, opr2);
+        default:
+            cout << "Unknown operator: " << op << endl;
+            exit(1);
     }
-    return isNegative ? -result : result;
 }
 
-double ExpressionProcessor::evaluateInfix(const char *expression) {
-    Stack values(100);
-    Stack ops(100);
-    bool expectNegative = true;
-
-    while (*expression != '#') {
-        if (*expression == ' ') {
-            expression++;
-            continue;
-        }
-        if (isdigit(*expression) || (*expression == '-' && expectNegative)) {
-            bool isNegative = (*expression == '-');
-            if (isNegative) expression++;
-            values.push(readNumber(expression, isNegative));
-            expectNegative = false;
-        } else if (*expression == '(') {
-            ops.push(*expression++);
-            expectNegative = true;
-        } else if (*expression == ')') {
-            while (!ops.isEmpty() && ops.peek() != '(') {
-                double val2 = values.pop();
-                double val1 = values.pop();
-                char op = (char)ops.pop();
-                values.push(applyOperation(val1, val2, op));
+double exprProcessor::evalPostfix(vector<string> tokens) {
+    Stack<double> stack(tokens.size());
+    for (const string& token : tokens) {
+        if (token == "#") {
+            break;
+        } else if (isdigit(token[0]) || (token[0] == '-' && token.length() > 1 && isdigit(token[1]))) {
+            stack.push(atof(token.c_str()));
+        } else if (isOperator(token)) {
+            if (stack.isEmpty()) {
+                cout << "Invalid expression" << endl;
+                exit(1);
             }
-            ops.pop();
-            expression++;
-            expectNegative = false;
+            double opr2 = stack.pop();
+            if (stack.isEmpty()) {
+                cout << "Invalid expression" << endl;
+                exit(1);
+            }
+            double opr1 = stack.pop();
+            double result = operate(opr1, opr2, token[0]);
+            stack.push(result);
         } else {
-            while (!ops.isEmpty() && precedence(ops.peek()) >= precedence(*expression)) {
+            cout << "Invalid token: " << token << endl;
+            exit(1);
+        }
+    }
+    if (!stack.isEmpty()) {
+        double result = stack.pop();
+        if (!stack.isEmpty()) {
+            cout << "Invalid expression" << endl;
+            exit(1);
+        }
+        return result;
+    } else {
+        cout << "Invalid expression" << endl;
+        exit(1);
+    }
+}
+
+double exprProcessor::evalPrefix(vector<string> tokens) {
+    Stack<double> stack(tokens.size());
+    for (int i = tokens.size() - 1; i >= 0; i--) {
+        const string& token = tokens[i];
+        if (token == "#") {
+            continue;
+        } else if (isdigit(token[0]) || (token[0] == '-' && token.length() > 1 && isdigit(token[1]))) {
+            stack.push(atof(token.c_str()));
+        } else if (isOperator(token)) {
+            if (stack.isEmpty()) {
+                cout << "Invalid expression" << endl;
+                exit(1);
+            }
+            double opr1 = stack.pop();
+            if (stack.isEmpty()) {
+                cout << "Invalid expression" << endl;
+                exit(1);
+            }
+            double opr2 = stack.pop();
+            double result = operate(opr1, opr2, token[0]);
+            stack.push(result);
+        } else {
+            cout << "Invalid token: " << token << endl;
+            exit(1);
+        }
+    }
+    if (!stack.isEmpty()) {
+        double result = stack.pop();
+        if (!stack.isEmpty()) {
+            cout << "Invalid expression" << endl;
+            exit(1);
+        }
+        return result;
+    } else {
+        cout << "Invalid expression" << endl;
+        exit(1);
+    }
+}
+
+double exprProcessor::evalInfix(vector<string> tokens) {
+    Stack<double> values(tokens.size());
+    Stack<char> operators(tokens.size());
+
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        const string& token = tokens[i];
+        if (token == "#") {
+            break;
+        } else if (isdigit(token[0]) || (token[0] == '-' && token.length() > 1 && isdigit(token[1]))) {
+            values.push(atof(token.c_str()));
+        } else if (token == "(") {
+            operators.push('(');
+        } else if (token == ")") {
+            while (!operators.isEmpty() && operators.top() != '(') {
+                char op = operators.pop();
                 double val2 = values.pop();
                 double val1 = values.pop();
-                char op = (char)ops.pop();
-                values.push(applyOperation(val1, val2, op));
+                double result = operate(val1, val2, op);
+                values.push(result);
             }
-            ops.push(*expression++);
-            expectNegative = true;
+            if (!operators.isEmpty() && operators.top() == '(') {
+                operators.pop();
+            } else {
+                cout << "Invalid expression" << endl;
+                exit(1);
+            }
+        } else if (isOperator(token)) {
+            char currOp = token[0];
+            while (!operators.isEmpty() && priority(operators.top()) >= priority(currOp)) {
+                char op = operators.pop();
+                double val2 = values.pop();
+                double val1 = values.pop();
+                double result = operate(val1, val2, op);
+                values.push(result);
+            }
+            operators.push(currOp);
+        } else {
+            cout << "Invalid token: " << token << endl;
+            exit(1);
         }
     }
 
-    while (!ops.isEmpty()) {
+    while (!operators.isEmpty()) {
+        char op = operators.pop();
         double val2 = values.pop();
         double val1 = values.pop();
-        char op = (char)ops.pop();
-        values.push(applyOperation(val1, val2, op));
+        double result = operate(val1, val2, op);
+        values.push(result);
     }
 
-    return values.pop();
-}
-
-double ExpressionProcessor::evaluatePostfix(const char *expression) {
-    Stack stack(100);
-
-    while (*expression != '#') {
-        if (*expression == ' ') {
-            expression++;
-            continue;
+    if (!values.isEmpty()) {
+        double result = values.pop();
+        if (!values.isEmpty()) {
+            cout << "Invalid expression" << endl;
+            exit(1);
         }
-        if (isdigit(*expression) || (*expression == '-' && isdigit(*(expression + 1)))) {
-            stack.push(readNumber(expression, *expression == '-'));
-            if (*expression == '-') expression++;
-        } else {
-            double val2 = stack.pop();
-            double val1 = stack.pop();
-            stack.push(applyOperation(val1, val2, *expression++));
-        }
+        return result;
+    } else {
+        cout << "Invalid expression" << endl;
+        exit(1);
     }
-    return stack.pop();
 }
 
-void runShell() {
-    ExpressionProcessor processor;
+double exprProcessor::parseExpr(string expr) {
+    vector<string> tokens = tokenize(expr);
+    if (tokens.empty()) {
+        cout << "Empty expression" << endl;
+        exit(1);
+    }
+
+    if (!tokens.empty() && tokens.back() == "#") {
+        tokens.pop_back();
+    }
+
+    if (tokens.empty()) {
+        cout << "Empty expression after removing '#'" << endl;
+        exit(1);
+    }
+
+    bool isOperatorFirst = isOperator(tokens[0]);
+    bool isOperatorLast = isOperator(tokens.back());
+
+    if (isOperatorFirst && !isOperatorLast) {
+        return evalPrefix(tokens);
+    } else if (!isOperatorFirst && isOperatorLast) {
+        return evalPostfix(tokens);
+    } else {
+        return evalInfix(tokens);
+    }
+}
+
+int main() {
+    exprProcessor processor;
     char expression[100];
 
     while (true) {
-        cout << "Enter expression (end with '#') or 'exit' to quit: ";
+        cout << "Enter expression (end with '#' or 'exit' to quit): ";
         cin.getline(expression, 100);
 
         if (strcmp(expression, "exit") == 0) break;
@@ -180,16 +320,8 @@ void runShell() {
             continue;
         }
 
-        if (strchr(expression, ' ')) {
-            cout << "Postfix evaluation result: " << processor.evaluatePostfix(expression) << endl;
-        } else {
-            cout << "Infix evaluation result: " << processor.evaluateInfix(expression) << endl;
-        }
+        cout << "Evaluation result: " << processor.parseExpr(string(expression)) << endl;
     }
-}
-
-int main() {
-    runShell();
     return 0;
 }
 
