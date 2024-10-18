@@ -50,14 +50,11 @@ def annotate_pinyin(sentences, pinyin_map):
                     py_list = pyr.findall(pinyin)
                     for cur_id in range(len(word_to_match)):
                             cur_ans += word_to_match[cur_id] + '（' + py_list[cur_id][0] + py_list[cur_id][1] + '）'
-                    print(cur_ans)
                     i = j
                     break
                 j -= 1
             while i < l and not sentence[i] in pinyin_map:
                 cur_ans += sentence[i]
-                print('adsa: ',cur_ans)
-                print(i,l)
                 i+=1
         
         ans.append(cur_ans)
