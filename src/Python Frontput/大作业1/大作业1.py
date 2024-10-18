@@ -30,9 +30,6 @@ def load_pinyin_map(filename):
 
     return pinyin_map
 
-def find_pinyin_for_char(char, pinyin_map):
-    return pinyin_map.get(char, None)
-
 def annotate_pinyin(sentences, pinyin_map):
     pyr = re.compile(r'(b|p|m|f|d|t|n|l|g|k|h|j|q|x|zh|ch|sh|r|z|c|s|y|w)?(iang|iong|uang|uang|ang|eng|ing|ong|ian|iao|uai|uan|ai|ei|ao|ou|ia|ie|ue|ua|ui|uo|ve|er|an|en|in|un|a|o|e|i|u)')
     ans = []
