@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter.scrolledtext import ScrolledText
-import os
+import os,re
 
 def load_pinyin_map(filename):
     pinyin_map = {}
@@ -12,38 +12,57 @@ def load_pinyin_map(filename):
             if line == "[Text]":
                 is_text_section = True
                 continue
-            elif line.startswith("[") and line.endswith("]"):
-                is_text_section = False
-            if is_text_section:
-                if not line or '=' in line:
+            elif not is_text_section or not line:
+                continue
+
+            word = ''
+            pinyin = ''
+
+            for c in line:
+                if c == ' ':
                     continue
-                char = line[:-2]
-                pinyin = line[-2:]
-                if char in pinyin_map:
-                    if len(char) > len(pinyin_map[char]):
-                        pinyin_map[char] = pinyin
+                elif c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
+                    pinyin += c
                 else:
-                    pinyin_map[char] = pinyin
+                    word += c
+            
+            pinyin_map[word] = pinyin
+
     return pinyin_map
 
-def annotate_pinyin(input_file, output_file, pinyin_map):
-    with open(input_file, 'r', encoding='utf-8') as infile, open(output_file, 'w', encoding='utf-8') as outfile:
-        for line in infile:
-            annotated_line = ""
-            i = 0
-            while i < len(line):
-                matched = False
-                for j in range(len(line), i, -1):
-                    sub_str = line[i:j]
-                    if sub_str in pinyin_map:
-                        annotated_line += f"{sub_str}（{pinyin_map[sub_str]}）"
-                        i = j
-                        matched = True
-                        break
-                if not matched:
-                    annotated_line += line[i]
-                    i += 1
-            outfile.write(annotated_line)
+def find_pinyin_for_char(char, pinyin_map):
+    return pinyin_map.get(char, None)
+
+def annotate_pinyin(sentences, pinyin_map):
+    pyr = re.compile(r'(b|p|m|f|d|t|n|l|g|k|h|j|q|x|zh|ch|sh|r|z|c|s|y|w)?(iang|iong|uang|uang|ang|eng|ing|ong|ian|iao|uai|uan|ai|ei|ao|ou|ia|ie|ue|ua|ui|uo|ve|er|an|en|in|un|a|o|e|i|u)')
+    ans = []
+    for sentence in sentences:
+        sentence = sentence.strip()
+        cur_ans = ''
+        l = len(sentence)
+        i = 0
+        while i < l:
+            j = l
+            while j > i:
+                word_to_match = sentence[i:j]
+                if word_to_match in pinyin_map:
+                    pinyin = pinyin_map[word_to_match]
+                    py_list = pyr.findall(pinyin)
+                    for cur_id in range(len(word_to_match)):
+                            cur_ans += word_to_match[cur_id] + '（' + py_list[cur_id][0] + py_list[cur_id][1] + '）'
+                    print(cur_ans)
+                    i = j
+                    break
+                j -= 1
+            while i < l and not sentence[i] in pinyin_map:
+                cur_ans += sentence[i]
+                print('adsa: ',cur_ans)
+                print(i,l)
+                i+=1
+        
+        ans.append(cur_ans)
+            
+    return ans
 
 def select_input_file():
     filename = filedialog.askopenfilename(title="选择输入文件", filetypes=[("文本文件", "*.txt")])
@@ -61,10 +80,15 @@ def select_output_file():
 def convert():
     try:
         pinyin_map = load_pinyin_map(os.path.join(os.getcwd(), "winpy.txt"))
-        annotate_pinyin(input_path.get(), output_path.get(), pinyin_map)
-        with open(output_path.get(), 'r', encoding='utf-8') as file:
+
+        with open(input_path.get(), 'r', encoding='utf-8') as fin, open(output_path.get(), 'w', encoding='utf-8') as fout:
+            sentences = fin.readlines()
+            annotated_sentences = annotate_pinyin(sentences, pinyin_map)
+            for sentence in annotated_sentences:
+                fout.write(sentence + '\n')
             output_text.delete(1.0, tk.END)
-            output_text.insert(tk.END, file.read())
+            output_text.insert(tk.END, '\n'.join(annotated_sentences))
+            
         messagebox.showinfo("完成", "拼音标注完成，文件已保存。")
     except Exception as e:
         messagebox.showerror("错误", f"转换失败：{e}")
