@@ -1,0 +1,29 @@
+1.如下网址有一个维基百科的镜像文件，请下载
+链接：https://pan.baidu.com/s/18Wisy1bVf5qhK_qg6SRR1g 
+提取码：suda 
+2.上面的文件是一个XML文件，其中<page>到</page>之间就是一个百科的页面。
+下面是一个页面的例子：
+<page>
+    <title>湯姆歷險記</title>
+    <ns>0</ns>
+    <id>225193</id>
+    <redirect title="汤姆·索亚历险记" />
+    <revision>
+      <id>1509218</id>
+      <parentid>1509215</parentid>
+      <timestamp>2006-02-10T05:01:44Z</timestamp>
+      <contributor>
+        <username>KaurJmeb</username>
+        <id>13878</id>
+      </contributor>
+      <model>wikitext</model>
+      <format>text/x-wiki</format>
+      <text xml:space="preserve">#redirect [[汤姆·索亚历险记]]</text>
+      <sha1>mnok561dadzr5e6bd4atnwzt2kr9v5p</sha1>
+    </revision>
+  </page>
+其中的<id>编号</id>是一个页面的唯一编号
+
+3.请编写程序让用户输入一个词组或者英文单词，检索出包含该词组或者单词的所有页面的编号
+
+4.可以自行对xml举行加工，加工成自己需要的数据格式，但是需要提供加工程序以及数据结构的说明文档
