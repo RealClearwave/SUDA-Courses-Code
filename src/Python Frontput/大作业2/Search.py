@@ -9,20 +9,27 @@ import threading
 stop_search = False
 
 def extract_pages(file_path):
+    if not os.path.exists(file_path):
+        tk.messagebox.showerror("错误", f"文件 {file_path} 不存在")
+        return
+        
     with open(file_path, "r", encoding="utf-8") as f:
         inside_page = False
         page_content = []
-        for line in f:
-            if "<page>" in line:
-                inside_page = True
-                page_content = [line]
-            elif "</page>" in line:
-                page_content.append(line)
-                yield "".join(page_content)
-                inside_page = False
-                page_content = []
-            elif inside_page:
-                page_content.append(line)
+        try:
+            for line in f:
+                if "<page>" in line:
+                    inside_page = True
+                    page_content = [line]
+                elif "</page>" in line:
+                    page_content.append(line)
+                    yield "".join(page_content)
+                    inside_page = False
+                    page_content = []
+                elif inside_page:
+                    page_content.append(line)
+        except Exception as e:
+            print(e)
 
 def search_term_in_pages(term, file_path):
     global stop_search
