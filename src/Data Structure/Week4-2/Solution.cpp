@@ -20,7 +20,7 @@ struct node{
 
 priority_queue<node> pq;
 
-//long long f[maxn];
+long long f[maxn];
 
 string myitoa(int x){
     string ans;
@@ -31,28 +31,37 @@ string myitoa(int x){
     return ans;
 }
 
-long long count(int u, string subfix){
-    //if (f[u] != -1) return f[u];
+long long fastCount(int u){
+    if (f[u] != -1) return f[u];
     long long ans = 0;
+    for (int i=1;i<=u/2;i++)
+        ans += fastCount(i);
+    f[u] = ans+1;
+    return f[u];
+}
+
+void print(int u, string subfix){
+    if (pq.size() > 1000) return;
     string curSubfix = myitoa(u) + subfix;
     pq.push(node(curSubfix));
-
     for (int i=1;i<=u/2;i++)
-        ans += count(i, curSubfix);
-    
-    //f[u] = ans+1;
-    //return f[u];
-    return ans+1;
+        print(i, curSubfix);
+
+    return ;
 }
 
 int main(){
     int n;cin>>n;
-    //for (int i=0;i<=n;i++) f[i] = -1;
-    long long ans = count(n,"");
+    for (int i=0;i<=n;i++) f[i] = -1;
+    long long ans = fastCount(n);
     cout<<"Total="<<ans<<endl;
+
+    print(n,"");
+    cout<<"First "<<min(n,1000)<<" numbers:"<<endl;
     while (!pq.empty()){
         cout<<pq.top().val<<' ';
         pq.pop();
     }
+    
     return 0;
 }
